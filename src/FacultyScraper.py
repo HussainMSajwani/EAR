@@ -101,3 +101,9 @@ class AUSScraper(FacultyScholarScraper):
         })
         self.faculty_df = df
         return df
+
+class AUSScraper(FacultyScholarScraper):
+
+    def __init__(self):
+        institute = "UAEU"
+        super().__init__(institute)
