@@ -3,7 +3,8 @@ from os import getcwd
 from bs4 import BeautifulSoup
 import requests
 import pandas as pd
-from .utils import _faculty_untitle
+from .utils import faculty_untitle
+from scholarly import scholarly
 
 class FacultyScholarScraper:
     """absstract class for faculty scrapers
@@ -22,11 +23,35 @@ class FacultyScholarScraper:
         """
         return self.faculty_df
 
+
+    def find_faculty_scholar(faculty):
+        """find faculty scholar page given their name and institute
+
+        Args:
+            faculty (string): name of faculty
+            institute (string): institute
+        """
+        g = scholarly.search_author(faculty + " khalifa university")
+        g = list(g)
+        if (len(g) > 1 or len(g) == 0):
+            with open('KU.log', 'a') as f:
+                f.writelines(f"{faculty},{len(g)}\n")
+        for i in g:
+            details = scholarly.fill(i, sections=['basics', 'indices'])
+            for key in keys:
+                try:
+                    df[key].append(details[key])
+                except KeyError:
+                    df[key].append('')
+
+
     def to_csv(self):
         """save CSV of self.faculty_df
         """
         if self.faculty_df is not None:
             self.faculty_df.to_csv(self.data_dir / f"{self.institute}_faculty.csv", index=False)
+    
+    
 
 class KUScraper(FacultyScholarScraper):
     
@@ -48,7 +73,7 @@ class KUScraper(FacultyScholarScraper):
 
 
         df = pd.DataFrame({
-            'name': [_faculty_untitle(blk.find_all("span", {"class": 'name'})[0].text) for blk in blks],
+            'name': [faculty_untitle(blk.find_all("span", {"class": 'name'})[0].text) for blk in blks],
             'title': [blk.find_all("span", {"class": 'title'})[0].text for blk in blks],
             'department': [blk.find_all("span", {"class": 'department'})[0].text for blk in blks]
         })
